@@ -14,9 +14,11 @@ fn main() {
             Ok(mut stream) => {
                 println!("accepted new connection");
                 let message_size: i32 = 4;
-                let mut correlation_id: u32 = 7;
-                while (stream.read(&mut request_buffer).unwrap() > 0) {
+                let mut correlation_id: u32 = 0;
+                while stream.read(&mut request_buffer).unwrap() > 0 {
                     println!("First bytes are read");
+
+                    // Assume we know exactly what format we will receive, e.g. Kafka request/response
                     match request_buffer[8..12].try_into() {
                         Ok(bytes) => {
                             correlation_id = u32::from_be_bytes(bytes);
@@ -31,6 +33,7 @@ fn main() {
                     response_buffer.extend(&correlation_id.to_be_bytes());
 
                     stream.write_all(&response_buffer).unwrap();
+                    response_buffer.clear();
                 }
             }
             Err(e) => {
